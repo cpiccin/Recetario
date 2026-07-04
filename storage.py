@@ -22,6 +22,17 @@ def guardar_receta(receta):
     return True
 
 
+def actualizar_receta(indice, receta):
+    if not receta.get("titulo", "").strip():
+        return False
+    recetas = cargar_recetas()
+    if indice < 0 or indice >= len(recetas):
+        return False
+    recetas[indice] = receta
+    RECETAS_PATH.write_text(json.dumps(recetas, ensure_ascii=False, indent=2), encoding="utf-8")
+    return True
+
+
 def guardar_imagen(ruta_origen):
     IMG_DIR.mkdir(exist_ok=True)
     origen = Path(ruta_origen)

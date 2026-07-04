@@ -4,7 +4,7 @@ from tkinter import filedialog
 
 from PIL import Image, ImageTk
 
-from storage import BASE_DIR, cargar_recetas, guardar_imagen, guardar_receta
+from storage import BASE_DIR, actualizar_receta, cargar_recetas, guardar_imagen, guardar_receta
 
 
 class RecetarioApp:
@@ -18,6 +18,8 @@ class RecetarioApp:
         self.paso_filas = []
         self.imagen_filas = []
         self.imagenes_referencias = []
+        self.editando_indice = None
+        self.receta_actual_indice = None
 
         list_frame = tk.Frame(root)
         list_frame.pack(side="left", fill="y", padx=(10, 5), pady=10)
@@ -93,14 +95,16 @@ class RecetarioApp:
             anchor="w", pady=(2, 0)
         )
 
-    def agregar_ingrediente(self):
+    def agregar_ingrediente(self, cantidad="", nombre=""):
         fila = tk.Frame(self.ingredientes_container)
         fila.pack(fill="x", pady=2)
 
         cantidad_entry = tk.Entry(fila, width=10)
+        cantidad_entry.insert(0, cantidad)
         cantidad_entry.pack(side="left")
 
         nombre_entry = tk.Entry(fila)
+        nombre_entry.insert(0, nombre)
         nombre_entry.pack(side="left", fill="x", expand=True, padx=(4, 0))
 
         def eliminar():
@@ -111,11 +115,12 @@ class RecetarioApp:
         self.ingrediente_filas.append((fila, cantidad_entry, nombre_entry))
         cantidad_entry.focus_set()
 
-    def agregar_paso(self):
+    def agregar_paso(self, texto=""):
         fila = tk.Frame(self.pasos_container)
         fila.pack(fill="x", pady=2)
 
         entry = tk.Entry(fila)
+        entry.insert(0, texto)
         entry.pack(side="left", fill="x", expand=True)
 
         def eliminar():
@@ -134,8 +139,9 @@ class RecetarioApp:
         if not ruta_origen:
             return
 
-        ruta_relativa = guardar_imagen(ruta_origen)
+        self._crear_fila_imagen(guardar_imagen(ruta_origen))
 
+    def _crear_fila_imagen(self, ruta_relativa):
         fila = tk.Frame(self.imagenes_container)
         fila.pack(fill="x", pady=2)
         tk.Label(fila, text=Path(ruta_relativa).name, anchor="w").pack(
@@ -157,6 +163,10 @@ class RecetarioApp:
     def _build_vista(self):
         self.view_frame = tk.Frame(self.right_container)
 
+        toolbar = tk.Frame(self.view_frame)
+        toolbar.pack(side="top", fill="x")
+        tk.Button(toolbar, text="Editar", command=self.on_editar).pack(side="right", pady=(0, 5))
+
         self.vista_texto = tk.Text(
             self.view_frame, wrap="word", width=1, height=1, borderwidth=0, highlightthickness=0
         )
@@ -167,6 +177,7 @@ class RecetarioApp:
         self.vista_texto.config(state="disabled")
 
     def mostrar_formulario(self):
+        self.editando_indice = None
         self.lista.selection_clear(0, "end")
         self.view_frame.pack_forget()
         self.form_frame.pack(fill="both", expand=True)
@@ -178,7 +189,40 @@ class RecetarioApp:
         self.agregar_ingrediente()
         self.agregar_paso()
 
-    def mostrar_vista(self, receta):
+    def cargar_formulario(self, receta):
+        self.view_frame.pack_forget()
+        self.form_frame.pack(fill="both", expand=True)
+
+        self.titulo_entry.delete(0, "end")
+        self.titulo_entry.insert(0, receta.get("titulo", ""))
+
+        self._limpiar_filas(self.ingredientes_container, self.ingrediente_filas)
+        self._limpiar_filas(self.pasos_container, self.paso_filas)
+        self._limpiar_filas(self.imagenes_container, self.imagen_filas)
+
+        ingredientes = receta.get("ingredientes") or []
+        for item in ingredientes:
+            self.agregar_ingrediente(item.get("cantidad", ""), item.get("nombre", ""))
+        if not ingredientes:
+            self.agregar_ingrediente()
+
+        pasos = receta.get("pasos") or []
+        for paso in pasos:
+            self.agregar_paso(paso)
+        if not pasos:
+            self.agregar_paso()
+
+        for ruta in receta.get("imagenes") or []:
+            self._crear_fila_imagen(ruta)
+
+    def on_editar(self):
+        if self.receta_actual_indice is None:
+            return
+        self.editando_indice = self.receta_actual_indice
+        self.cargar_formulario(self.recetas[self.receta_actual_indice])
+
+    def mostrar_vista(self, receta, indice):
+        self.receta_actual_indice = indice
         self.form_frame.pack_forget()
         self.view_frame.pack(fill="both", expand=True)
 
@@ -229,7 +273,8 @@ class RecetarioApp:
         seleccion = self.lista.curselection()
         if not seleccion:
             return
-        self.mostrar_vista(self.recetas[seleccion[0]])
+        indice = seleccion[0]
+        self.mostrar_vista(self.recetas[indice], indice)
 
     def on_guardar(self):
         receta = {
@@ -243,13 +288,26 @@ class RecetarioApp:
             "imagenes": [ruta for _, ruta in self.imagen_filas],
         }
 
-        if not guardar_receta(receta):
+        if self.editando_indice is not None:
+            ok = actualizar_receta(self.editando_indice, receta)
+        else:
+            ok = guardar_receta(receta)
+
+        if not ok:
             self.estado_label.config(fg="red")
             self.estado.set("El título es obligatorio.")
             return
+
+        indice_editado = self.editando_indice
+        self.editando_indice = None
 
         self.estado_label.config(fg="green")
         self.estado.set("Receta guardada.")
         self.root.after(2000, lambda: self.estado.set(""))
         self.refrescar_lista()
-        self.mostrar_formulario()
+
+        if indice_editado is not None:
+            self.lista.selection_set(indice_editado)
+            self.mostrar_vista(self.recetas[indice_editado], indice_editado)
+        else:
+            self.mostrar_formulario()
