@@ -1,6 +1,8 @@
 import tkinter as tk
+from pathlib import Path
+from tkinter import filedialog
 
-from storage import cargar_recetas, guardar_receta
+from storage import cargar_recetas, guardar_imagen, guardar_receta
 
 
 class RecetarioApp:
@@ -12,6 +14,7 @@ class RecetarioApp:
         self.recetas = []
         self.ingrediente_filas = []
         self.paso_filas = []
+        self.imagen_filas = []
 
         list_frame = tk.Frame(root)
         list_frame.pack(side="left", fill="y", padx=(10, 5), pady=10)
@@ -63,6 +66,10 @@ class RecetarioApp:
         self.titulo_entry.pack(fill="x")
 
         tk.Label(self.form_inner, text="Ingredientes").pack(anchor="w", pady=(8, 0))
+        columnas = tk.Frame(self.form_inner)
+        columnas.pack(fill="x")
+        tk.Label(columnas, text="Cantidad", width=10, anchor="w").pack(side="left")
+        tk.Label(columnas, text="Ingrediente", anchor="w").pack(side="left", fill="x", expand=True)
         self.ingredientes_container = tk.Frame(self.form_inner)
         self.ingredientes_container.pack(fill="x")
         tk.Button(
@@ -76,34 +83,72 @@ class RecetarioApp:
             anchor="w", pady=(2, 0)
         )
 
-        tk.Label(self.form_inner, text="Imágenes (una ruta o URL por línea)").pack(anchor="w", pady=(8, 0))
-        self.imagenes_box = tk.Text(self.form_inner, wrap="word", width=1, height=3)
-        self.imagenes_box.pack(fill="x")
+        tk.Label(self.form_inner, text="Imágenes").pack(anchor="w", pady=(8, 0))
+        self.imagenes_container = tk.Frame(self.form_inner)
+        self.imagenes_container.pack(fill="x")
+        tk.Button(self.form_inner, text="+ Subir imagen", command=self.agregar_imagen).pack(
+            anchor="w", pady=(2, 0)
+        )
 
-    def _agregar_fila(self, container, filas):
-        fila = tk.Frame(container)
+    def agregar_ingrediente(self):
+        fila = tk.Frame(self.ingredientes_container)
+        fila.pack(fill="x", pady=2)
+
+        cantidad_entry = tk.Entry(fila, width=10)
+        cantidad_entry.pack(side="left")
+
+        nombre_entry = tk.Entry(fila)
+        nombre_entry.pack(side="left", fill="x", expand=True, padx=(4, 0))
+
+        def eliminar():
+            self.ingrediente_filas.remove((fila, cantidad_entry, nombre_entry))
+            fila.destroy()
+
+        tk.Button(fila, text="×", command=eliminar, width=2).pack(side="left", padx=(4, 0))
+        self.ingrediente_filas.append((fila, cantidad_entry, nombre_entry))
+        cantidad_entry.focus_set()
+
+    def agregar_paso(self):
+        fila = tk.Frame(self.pasos_container)
         fila.pack(fill="x", pady=2)
 
         entry = tk.Entry(fila)
         entry.pack(side="left", fill="x", expand=True)
 
         def eliminar():
-            filas.remove((fila, entry))
+            self.paso_filas.remove((fila, entry))
             fila.destroy()
 
         tk.Button(fila, text="×", command=eliminar, width=2).pack(side="left", padx=(4, 0))
-        filas.append((fila, entry))
+        self.paso_filas.append((fila, entry))
         entry.focus_set()
 
-    def agregar_ingrediente(self):
-        self._agregar_fila(self.ingredientes_container, self.ingrediente_filas)
+    def agregar_imagen(self):
+        ruta_origen = filedialog.askopenfilename(
+            title="Elegí una imagen",
+            filetypes=[("Imágenes", "*.png *.jpg *.jpeg *.gif *.bmp")],
+        )
+        if not ruta_origen:
+            return
 
-    def agregar_paso(self):
-        self._agregar_fila(self.pasos_container, self.paso_filas)
+        ruta_relativa = guardar_imagen(ruta_origen)
+
+        fila = tk.Frame(self.imagenes_container)
+        fila.pack(fill="x", pady=2)
+        tk.Label(fila, text=Path(ruta_relativa).name, anchor="w").pack(
+            side="left", fill="x", expand=True
+        )
+
+        def eliminar():
+            self.imagen_filas.remove((fila, ruta_relativa))
+            fila.destroy()
+
+        tk.Button(fila, text="×", command=eliminar, width=2).pack(side="left", padx=(4, 0))
+        self.imagen_filas.append((fila, ruta_relativa))
 
     def _limpiar_filas(self, container, filas):
-        for fila, _ in filas:
-            fila.destroy()
+        for fila_info in filas:
+            fila_info[0].destroy()
         filas.clear()
 
     def _build_vista(self):
@@ -126,7 +171,7 @@ class RecetarioApp:
         self.titulo_entry.delete(0, "end")
         self._limpiar_filas(self.ingredientes_container, self.ingrediente_filas)
         self._limpiar_filas(self.pasos_container, self.paso_filas)
-        self.imagenes_box.delete("1.0", "end")
+        self._limpiar_filas(self.imagenes_container, self.imagen_filas)
         self.agregar_ingrediente()
         self.agregar_paso()
 
@@ -142,7 +187,10 @@ class RecetarioApp:
         if ingredientes:
             self.vista_texto.insert("end", "\nIngredientes\n", "seccion")
             for item in ingredientes:
-                self.vista_texto.insert("end", f"• {item}\n", "cuerpo")
+                cantidad = item.get("cantidad", "").strip()
+                nombre = item.get("nombre", "").strip()
+                texto = f"{cantidad} {nombre}".strip() if cantidad else nombre
+                self.vista_texto.insert("end", f"• {texto}\n", "cuerpo")
 
         pasos = receta.get("pasos") or []
         if pasos:
@@ -150,10 +198,11 @@ class RecetarioApp:
             for numero, paso in enumerate(pasos, start=1):
                 self.vista_texto.insert("end", f"{numero}. {paso}\n", "cuerpo")
 
-        imagenes = receta.get("imagenes", "").strip()
+        imagenes = receta.get("imagenes") or []
         if imagenes:
             self.vista_texto.insert("end", "\nImágenes\n", "seccion")
-            self.vista_texto.insert("end", imagenes, "cuerpo")
+            for ruta in imagenes:
+                self.vista_texto.insert("end", f"• {ruta}\n", "cuerpo")
 
         self.vista_texto.config(state="disabled")
 
@@ -172,9 +221,13 @@ class RecetarioApp:
     def on_guardar(self):
         receta = {
             "titulo": self.titulo_entry.get().strip(),
-            "ingredientes": [e.get().strip() for _, e in self.ingrediente_filas if e.get().strip()],
+            "ingredientes": [
+                {"cantidad": cantidad.get().strip(), "nombre": nombre.get().strip()}
+                for _, cantidad, nombre in self.ingrediente_filas
+                if nombre.get().strip()
+            ],
             "pasos": [e.get().strip() for _, e in self.paso_filas if e.get().strip()],
-            "imagenes": self.imagenes_box.get("1.0", "end").strip(),
+            "imagenes": [ruta for _, ruta in self.imagen_filas],
         }
 
         if not guardar_receta(receta):
