@@ -1,9 +1,10 @@
 import tkinter as tk
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 
 from PIL import Image, ImageTk
 
+from exportar_pdf import exportar_recetas_pdf
 from richtext import configurar_tags, insertar_html, titulo_de_tag_enlace
 from storage import BASE_DIR, cargar_recetas, eliminar_receta
 from styles import (
@@ -50,6 +51,10 @@ class RecetasTab:
 
         toolbar = ttk.Frame(right_frame, style="Panel.TFrame")
         toolbar.pack(side="top", fill="x", padx=16, pady=(12, 0))
+        self.exportar_btn = ttk.Button(
+            toolbar, text="Exportar a PDF", style="Secundario.TButton", command=self.on_exportar_click
+        )
+        self.exportar_btn.pack(side="left")
         self.editar_btn = ttk.Button(
             toolbar, text="Editar", command=self.on_editar_click, state="disabled"
         )
@@ -138,6 +143,61 @@ class RecetasTab:
             return
         eliminar_receta(self.receta_actual_indice)
         self.refrescar_lista()
+
+    def on_exportar_click(self):
+        if not self.recetas:
+            messagebox.showinfo("Exportar a PDF", "No hay recetas para exportar.", parent=self.parent)
+            return
+
+        ventana = tk.Toplevel(self.parent)
+        ventana.title("Exportar a PDF")
+        ventana.geometry("340x420")
+        ventana.transient(self.parent.winfo_toplevel())
+        ventana.grab_set()
+
+        ttk.Label(ventana, text="Elegí las recetas a exportar:").pack(anchor="w", padx=12, pady=(12, 6))
+
+        lista = tk.Listbox(ventana, selectmode="extended")
+        estilizar_listbox(lista)
+        lista.pack(fill="both", expand=True, padx=12)
+        for receta in self.recetas:
+            lista.insert("end", receta.get("titulo", "(sin título)"))
+        lista.selection_set(0, "end")
+
+        botones = ttk.Frame(ventana, style="Panel.TFrame")
+        botones.pack(fill="x", padx=12, pady=12)
+        ttk.Button(
+            botones, text="Seleccionar todas", command=lambda: lista.selection_set(0, "end")
+        ).pack(side="left")
+
+        def exportar():
+            indices = lista.curselection()
+            if not indices:
+                messagebox.showwarning("Exportar a PDF", "Elegí al menos una receta.", parent=ventana)
+                return
+
+            ruta = filedialog.asksaveasfilename(
+                title="Guardar PDF",
+                defaultextension=".pdf",
+                filetypes=[("Documento PDF", "*.pdf")],
+                initialfile="recetas.pdf",
+                parent=ventana,
+            )
+            if not ruta:
+                return
+
+            try:
+                exportar_recetas_pdf([self.recetas[i] for i in indices], ruta)
+            except Exception as error:
+                messagebox.showerror(
+                    "Exportar a PDF", f"No se pudo generar el PDF:\n{error}", parent=ventana
+                )
+                return
+
+            ventana.destroy()
+            messagebox.showinfo("Exportar a PDF", f"PDF generado en:\n{ruta}", parent=self.parent)
+
+        ttk.Button(botones, text="Exportar", command=exportar).pack(side="right")
 
     def _separador(self, parent):
         tk.Frame(parent, bg=BORDER, height=1).pack(fill="x", pady=14, padx=(0, 16))
