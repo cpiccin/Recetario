@@ -33,6 +33,15 @@ def actualizar_receta(indice, receta):
     return True
 
 
+def eliminar_receta(indice):
+    recetas = cargar_recetas()
+    if indice < 0 or indice >= len(recetas):
+        return False
+    del recetas[indice]
+    RECETAS_PATH.write_text(json.dumps(recetas, ensure_ascii=False, indent=2), encoding="utf-8")
+    return True
+
+
 def guardar_imagen(ruta_origen):
     IMG_DIR.mkdir(exist_ok=True)
     origen = Path(ruta_origen)

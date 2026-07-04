@@ -1,11 +1,11 @@
 import tkinter as tk
 from pathlib import Path
-from tkinter import ttk
+from tkinter import messagebox, ttk
 
 from PIL import Image, ImageTk
 
 from richtext import configurar_tags, insertar_html
-from storage import BASE_DIR, cargar_recetas
+from storage import BASE_DIR, cargar_recetas, eliminar_receta
 from styles import (
     ACCENT,
     BG_PANEL,
@@ -54,6 +54,10 @@ class RecetasTab:
             toolbar, text="Editar", command=self.on_editar_click, state="disabled"
         )
         self.editar_btn.pack(side="right")
+        self.eliminar_btn = ttk.Button(
+            toolbar, text="Eliminar", command=self.on_eliminar_click, state="disabled"
+        )
+        self.eliminar_btn.pack(side="right", padx=(0, 8))
 
         vista_area = ttk.Frame(right_frame, style="Panel.TFrame")
         vista_area.pack(fill="both", expand=True)
@@ -97,6 +101,7 @@ class RecetasTab:
 
         self.receta_actual_indice = None
         self.editar_btn.config(state="disabled")
+        self.eliminar_btn.config(state="disabled")
         self._limpiar_vista()
         self._mostrar_mensaje_vacio()
 
@@ -108,6 +113,7 @@ class RecetasTab:
         self.receta_actual_indice = indice
         self.mostrar_vista(self.recetas[indice])
         self.editar_btn.config(state="normal")
+        self.eliminar_btn.config(state="normal")
 
     def on_seleccionar(self, event):
         seleccion = self.lista.curselection()
@@ -117,6 +123,21 @@ class RecetasTab:
         self.receta_actual_indice = indice
         self.mostrar_vista(self.recetas[indice])
         self.editar_btn.config(state="normal")
+        self.eliminar_btn.config(state="normal")
+
+    def on_eliminar_click(self):
+        if self.receta_actual_indice is None:
+            return
+        receta = self.recetas[self.receta_actual_indice]
+        confirmar = messagebox.askyesno(
+            "Eliminar receta",
+            f"¿Seguro que querés eliminar \"{receta.get('titulo', '')}\"? Esta acción no se puede deshacer.",
+            parent=self.parent,
+        )
+        if not confirmar:
+            return
+        eliminar_receta(self.receta_actual_indice)
+        self.refrescar_lista()
 
     def _separador(self, parent):
         tk.Frame(parent, bg=BORDER, height=1).pack(fill="x", pady=14, padx=(0, 16))
