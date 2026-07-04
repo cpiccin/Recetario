@@ -1,4 +1,5 @@
 import tkinter as tk
+from pathlib import Path
 from tkinter import ttk
 
 from PIL import Image, ImageTk
@@ -144,21 +145,74 @@ class RecetasTab:
         lineas = resultado[0] if isinstance(resultado, tuple) else (resultado or 1)
         texto.configure(height=max(lineas, 1), state="disabled")
 
-    def _mostrar_imagen(self, parent, ruta, maximo=300, lado=None):
+    def _mostrar_imagen(self, parent, imagenes, indice, fila, col, tam=150):
+        ruta = imagenes[indice]
         try:
             imagen = Image.open(BASE_DIR / ruta)
-            imagen.thumbnail((maximo, maximo))
+            imagen.thumbnail((tam, tam))
             foto = ImageTk.PhotoImage(imagen)
             self.imagenes_referencias.append(foto)
-            label = tk.Label(parent, image=foto, bg=BG_PANEL, borderwidth=0)
-            if lado:
-                label.pack(side=lado, padx=(0, 8), pady=(0, 8))
-            else:
-                label.pack(anchor="w", padx=(0, 16), pady=(10, 0))
+            label = tk.Label(parent, image=foto, bg=BG_PANEL, borderwidth=0, cursor="hand2")
+            label.grid(row=fila, column=col, padx=(0, 8), pady=(0, 8), sticky="w")
+            label.bind("<Button-1>", lambda e, i=indice: self._abrir_imagen_grande(imagenes, i))
         except (FileNotFoundError, OSError):
-            ttk.Label(parent, text=f"(no se pudo cargar {ruta})", style="Muted.TLabel").pack(
-                anchor="w", padx=(0, 16)
+            ttk.Label(parent, text=f"(no se pudo cargar {ruta})", style="Muted.TLabel").grid(
+                row=fila, column=col, sticky="w"
             )
+
+    def _abrir_imagen_grande(self, imagenes, indice_inicial=0):
+        estado = {"indice": indice_inicial}
+
+        ventana = tk.Toplevel(self.parent)
+        ventana.configure(bg="black")
+
+        label = tk.Label(ventana, bg="black", cursor="hand2")
+        label.pack(padx=10, pady=(10, 0))
+
+        contador = tk.Label(ventana, bg="black", fg="white", font=FONT_NORMAL)
+        contador.pack(pady=(4, 10))
+
+        def mostrar(indice):
+            estado["indice"] = indice % len(imagenes)
+            ruta = imagenes[estado["indice"]]
+            try:
+                imagen = Image.open(BASE_DIR / ruta)
+                imagen.thumbnail((900, 900))
+                foto = ImageTk.PhotoImage(imagen)
+            except (FileNotFoundError, OSError):
+                label.config(image="", text=f"(no se pudo cargar {ruta})", fg="white")
+                ventana.imagen_referencia = None
+                return
+            ventana.imagen_referencia = foto
+            label.config(image=foto, text="")
+            ventana.title(Path(ruta).name)
+            contador.config(text=f"{estado['indice'] + 1} / {len(imagenes)}")
+
+        def siguiente(event=None):
+            mostrar(estado["indice"] + 1)
+
+        def anterior(event=None):
+            mostrar(estado["indice"] - 1)
+
+        label.bind("<Button-1>", lambda e: ventana.destroy())
+        ventana.bind("<Escape>", lambda e: ventana.destroy())
+        ventana.bind("<Right>", siguiente)
+        ventana.bind("<Left>", anterior)
+
+        if len(imagenes) > 1:
+            botones = tk.Frame(ventana, bg="black")
+            botones.pack(pady=(0, 10))
+            tk.Button(
+                botones, text="‹ Anterior", command=anterior, bg="#333333", fg="white",
+                activebackground=ACCENT, activeforeground="white", relief="flat", cursor="hand2",
+            ).pack(side="left", padx=6)
+            tk.Button(
+                botones, text="Siguiente ›", command=siguiente, bg="#333333", fg="white",
+                activebackground=ACCENT, activeforeground="white", relief="flat", cursor="hand2",
+            ).pack(side="left", padx=6)
+
+        mostrar(indice_inicial)
+        ventana.focus_set()
 
     def mostrar_vista(self, receta):
         self._limpiar_vista()
@@ -237,12 +291,12 @@ class RecetasTab:
             ttk.Label(inner, text="Imágenes", style="Seccion.TLabel").pack(
                 anchor="w", padx=(0, 16), pady=(0, 8)
             )
-            self._mostrar_imagen(inner, imagenes[0], maximo=420)
-            if len(imagenes) > 1:
-                galeria = ttk.Frame(inner, style="Panel.TFrame")
-                galeria.pack(fill="x", padx=(0, 16), pady=(10, 0))
-                for ruta in imagenes[1:]:
-                    self._mostrar_imagen(galeria, ruta, maximo=120, lado="left")
+            galeria = ttk.Frame(inner, style="Panel.TFrame")
+            galeria.pack(fill="x", padx=(0, 16))
+            columnas = 4
+            for indice in range(len(imagenes)):
+                fila, col = divmod(indice, columnas)
+                self._mostrar_imagen(galeria, imagenes, indice, fila, col)
 
         tk.Frame(inner, bg=BG_PANEL, height=20).pack()
 
