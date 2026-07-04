@@ -3,7 +3,7 @@ from pathlib import Path
 from tkinter import filedialog, ttk
 
 from storage import actualizar_receta, guardar_imagen, guardar_receta
-from styles import ERROR, EXITO
+from styles import ERROR, EXITO, habilitar_scroll_rueda
 
 
 class AgregarTab:
@@ -37,6 +37,7 @@ class AgregarTab:
         form_scrollbar = ttk.Scrollbar(cuerpo, orient="vertical", command=canvas.yview)
         form_scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=16)
         canvas.configure(yscrollcommand=form_scrollbar.set)
+        habilitar_scroll_rueda(canvas)
 
         self.form_inner = ttk.Frame(canvas, style="Panel.TFrame")
         canvas.create_window((0, 0), window=self.form_inner, anchor="nw")

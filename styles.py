@@ -131,6 +131,20 @@ def estilizar_listbox(listbox):
     )
 
 
+def habilitar_scroll_rueda(canvas):
+    def _on_mousewheel(event):
+        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def _bind(_event):
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+    def _unbind(_event):
+        canvas.unbind_all("<MouseWheel>")
+
+    canvas.bind("<Enter>", _bind)
+    canvas.bind("<Leave>", _unbind)
+
+
 def agregar_hover_listbox(listbox):
     estado = {"indice": None}
 
