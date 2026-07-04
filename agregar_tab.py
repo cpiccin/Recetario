@@ -2,9 +2,20 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, ttk
 
-from richtext import alternar_formato, configurar_tags, insertar_html, texto_a_html
-from storage import actualizar_receta, guardar_imagen, guardar_receta
-from styles import ACCENT, BG_PANEL, BORDER, ERROR, EXITO, FONT_NORMAL, TEXT, habilitar_scroll_rueda
+from richtext import alternar_formato, aplicar_enlace, configurar_tags, insertar_html, texto_a_html
+from storage import actualizar_receta, cargar_recetas, guardar_imagen, guardar_receta
+from styles import (
+    ACCENT,
+    BG_PANEL,
+    BORDER,
+    ERROR,
+    EXITO,
+    FONT_NORMAL,
+    TEXT,
+    agregar_hover_listbox,
+    estilizar_listbox,
+    habilitar_scroll_rueda,
+)
 
 
 class AgregarTab:
@@ -64,6 +75,20 @@ class AgregarTab:
         self._boton_formato(barra, "N", ("Verdana", 9, "bold"), "negrita").pack(side="left")
         self._boton_formato(barra, "C", ("Verdana", 9, "italic"), "cursiva").pack(side="left", padx=(4, 0))
         self._boton_formato(barra, "S", ("Verdana", 9), "subrayado").pack(side="left", padx=(4, 0))
+        tk.Button(
+            barra,
+            text="Enlazar receta",
+            font=("Verdana", 9),
+            command=self._insertar_enlace,
+            bg=BG_PANEL,
+            fg=TEXT,
+            activebackground=ACCENT,
+            activeforeground="white",
+            relief="solid",
+            bd=1,
+            highlightthickness=0,
+            cursor="hand2",
+        ).pack(side="left", padx=(10, 0))
 
         seccion("Ingredientes")
         columnas = ttk.Frame(self.form_inner, style="Panel.TFrame")
@@ -152,9 +177,58 @@ class AgregarTab:
     def _aplicar_formato(self, tag):
         aplicado = self.campo_activo is not None and alternar_formato(self.campo_activo, tag)
         if not aplicado:
-            self.estado_label.config(foreground=ERROR)
-            self.estado.set("Primero escribí texto y seleccionalo (arrastrando con el mouse).")
-            self.parent.after(3000, lambda: self.estado.set(""))
+            self._avisar("Primero escribí texto y seleccionalo (arrastrando con el mouse).")
+
+    def _avisar(self, mensaje):
+        self.estado_label.config(foreground=ERROR)
+        self.estado.set(mensaje)
+        self.parent.after(3000, lambda: self.estado.set(""))
+
+    def _insertar_enlace(self):
+        campo = self.campo_activo
+        if campo is None:
+            self._avisar("Primero hacé click en el texto que querés enlazar y seleccionalo.")
+            return
+        try:
+            inicio = campo.index("sel.first")
+            fin = campo.index("sel.last")
+        except tk.TclError:
+            self._avisar("Primero escribí texto y seleccionalo (arrastrando con el mouse).")
+            return
+
+        recetas = cargar_recetas()
+        if not recetas:
+            self._avisar("Todavía no hay recetas guardadas para enlazar.")
+            return
+
+        self._abrir_selector_receta(campo, inicio, fin, recetas)
+
+    def _abrir_selector_receta(self, campo, inicio, fin, recetas):
+        ventana = tk.Toplevel(self.parent)
+        ventana.title("Enlazar receta")
+        ventana.geometry("320x380")
+        ventana.transient(self.parent.winfo_toplevel())
+        ventana.grab_set()
+
+        ttk.Label(ventana, text="Elegí la receta a enlazar:").pack(anchor="w", padx=12, pady=(12, 6))
+
+        lista = tk.Listbox(ventana)
+        estilizar_listbox(lista)
+        agregar_hover_listbox(lista)
+        lista.pack(fill="both", expand=True, padx=12)
+        for receta in recetas:
+            lista.insert("end", receta.get("titulo", "(sin título)"))
+
+        def confirmar(event=None):
+            seleccion = lista.curselection()
+            if not seleccion:
+                return
+            titulo = recetas[seleccion[0]].get("titulo", "")
+            aplicar_enlace(campo, inicio, fin, titulo)
+            ventana.destroy()
+
+        lista.bind("<Double-Button-1>", confirmar)
+        ttk.Button(ventana, text="Enlazar", command=confirmar).pack(pady=12)
 
     def cargar_receta(self, receta, indice):
         self.editando_indice = indice
@@ -288,8 +362,7 @@ class AgregarTab:
             ok = guardar_receta(receta)
 
         if not ok:
-            self.estado_label.config(foreground=ERROR)
-            self.estado.set("El título es obligatorio.")
+            self._avisar("El título es obligatorio.")
             return
 
         self.estado_label.config(foreground=EXITO)

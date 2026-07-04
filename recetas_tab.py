@@ -4,7 +4,7 @@ from tkinter import messagebox, ttk
 
 from PIL import Image, ImageTk
 
-from richtext import configurar_tags, insertar_html
+from richtext import configurar_tags, insertar_html, titulo_de_tag_enlace
 from storage import BASE_DIR, cargar_recetas, eliminar_receta
 from styles import (
     ACCENT,
@@ -158,7 +158,30 @@ class RecetasTab:
         )
         configurar_tags(texto, FONT_NORMAL)
         insertar_html(texto, html)
+        texto.tag_bind("enlace", "<Enter>", lambda e: texto.config(cursor="hand2"))
+        texto.tag_bind("enlace", "<Leave>", lambda e: texto.config(cursor=""))
+        texto.tag_bind("enlace", "<Button-1>", self._on_click_enlace)
         return texto
+
+    def _on_click_enlace(self, event):
+        widget = event.widget
+        indice_click = widget.index(f"@{event.x},{event.y}")
+        for tag in widget.tag_names(indice_click):
+            titulo = titulo_de_tag_enlace(tag)
+            if titulo:
+                self._ir_a_receta_por_titulo(titulo)
+                return
+
+    def _ir_a_receta_por_titulo(self, titulo):
+        for indice, receta in enumerate(self.recetas):
+            if receta.get("titulo", "") == titulo:
+                self.seleccionar_indice(indice)
+                return
+        messagebox.showinfo(
+            "Receta no encontrada",
+            f'No se encontró la receta "{titulo}" (puede haber sido eliminada o renombrada).',
+            parent=self.parent,
+        )
 
     def _ajustar_altura(self, texto):
         texto.update_idletasks()
