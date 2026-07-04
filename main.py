@@ -10,7 +10,7 @@ from styles import aplicar_estilo
 def main():
     root = tk.Tk()
     root.title("Recetario")
-    root.geometry("820x600")
+    root.geometry("1100x780")
     root.minsize(650, 450)
 
     aplicar_estilo(root)
