@@ -1,8 +1,9 @@
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog
+from tkinter import filedialog, ttk
 
 from storage import actualizar_receta, guardar_imagen, guardar_receta
+from styles import ERROR, EXITO
 
 
 class AgregarTab:
@@ -15,53 +16,78 @@ class AgregarTab:
         self.paso_filas = []
         self.imagen_filas = []
 
-        self.guardar_btn = tk.Button(parent, text="Guardar", command=self.on_guardar)
-        self.guardar_btn.pack(side="bottom", pady=(5, 10))
+        panel = ttk.Frame(parent, style="Panel.TFrame")
+        panel.pack(fill="both", expand=True)
+
+        pie = ttk.Frame(panel, style="Panel.TFrame")
+        pie.pack(side="bottom", fill="x", padx=16, pady=(0, 14))
 
         self.estado = tk.StringVar()
-        self.estado_label = tk.Label(parent, textvariable=self.estado, fg="green")
-        self.estado_label.pack(side="bottom")
+        self.estado_label = ttk.Label(pie, textvariable=self.estado, style="Panel.TLabel")
+        self.estado_label.pack(side="left")
 
-        canvas = tk.Canvas(parent, borderwidth=0, highlightthickness=0)
-        canvas.pack(side="left", fill="both", expand=True, padx=(10, 0), pady=10)
-        form_scrollbar = tk.Scrollbar(parent, orient="vertical", command=canvas.yview)
-        form_scrollbar.pack(side="right", fill="y")
+        self.guardar_btn = ttk.Button(pie, text="Guardar receta", command=self.on_guardar)
+        self.guardar_btn.pack(side="right")
+
+        cuerpo = ttk.Frame(panel, style="Panel.TFrame")
+        cuerpo.pack(side="top", fill="both", expand=True)
+
+        canvas = tk.Canvas(cuerpo, borderwidth=0, highlightthickness=0, bg="#FFFFFF")
+        canvas.pack(side="left", fill="both", expand=True, padx=(16, 0), pady=16)
+        form_scrollbar = ttk.Scrollbar(cuerpo, orient="vertical", command=canvas.yview)
+        form_scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=16)
         canvas.configure(yscrollcommand=form_scrollbar.set)
 
-        self.form_inner = tk.Frame(canvas)
+        self.form_inner = ttk.Frame(canvas, style="Panel.TFrame")
         canvas.create_window((0, 0), window=self.form_inner, anchor="nw")
         self.form_inner.bind(
             "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
-        tk.Label(self.form_inner, text="Título *").pack(anchor="w")
-        self.titulo_entry = tk.Entry(self.form_inner)
-        self.titulo_entry.pack(fill="x")
+        def seccion(texto, primera=False):
+            ttk.Label(self.form_inner, text=texto, style="Seccion.TLabel").pack(
+                anchor="w", pady=(0 if primera else 18, 6), padx=(0, 16)
+            )
 
-        tk.Label(self.form_inner, text="Ingredientes").pack(anchor="w", pady=(8, 0))
-        columnas = tk.Frame(self.form_inner)
-        columnas.pack(fill="x")
-        tk.Label(columnas, text="Cantidad", width=10, anchor="w").pack(side="left")
-        tk.Label(columnas, text="Ingrediente", anchor="w").pack(side="left", fill="x", expand=True)
-        self.ingredientes_container = tk.Frame(self.form_inner)
-        self.ingredientes_container.pack(fill="x")
-        tk.Button(
-            self.form_inner, text="+ Agregar ingrediente", command=self.agregar_ingrediente
-        ).pack(anchor="w", pady=(2, 0))
+        seccion("Título *", primera=True)
+        self.titulo_entry = ttk.Entry(self.form_inner, font=("Segoe UI", 12))
+        self.titulo_entry.pack(fill="x", padx=(0, 16))
 
-        tk.Label(self.form_inner, text="Pasos").pack(anchor="w", pady=(8, 0))
-        self.pasos_container = tk.Frame(self.form_inner)
-        self.pasos_container.pack(fill="x")
-        tk.Button(self.form_inner, text="+ Agregar paso", command=self.agregar_paso).pack(
-            anchor="w", pady=(2, 0)
+        seccion("Ingredientes")
+        columnas = ttk.Frame(self.form_inner, style="Panel.TFrame")
+        columnas.pack(fill="x", padx=(0, 16))
+        ttk.Label(columnas, text="Cantidad", width=10, style="Muted.TLabel").pack(side="left")
+        ttk.Label(columnas, text="Ingrediente", style="Muted.TLabel").pack(
+            side="left", fill="x", expand=True
         )
+        self.ingredientes_container = ttk.Frame(self.form_inner, style="Panel.TFrame")
+        self.ingredientes_container.pack(fill="x", padx=(0, 16), pady=(4, 0))
+        ttk.Button(
+            self.form_inner,
+            text="+ Agregar ingrediente",
+            style="Secundario.TButton",
+            command=self.agregar_ingrediente,
+        ).pack(anchor="w", pady=(8, 0), padx=(0, 16))
 
-        tk.Label(self.form_inner, text="Imágenes").pack(anchor="w", pady=(8, 0))
-        self.imagenes_container = tk.Frame(self.form_inner)
-        self.imagenes_container.pack(fill="x")
-        tk.Button(self.form_inner, text="+ Subir imagen", command=self.agregar_imagen).pack(
-            anchor="w", pady=(2, 0)
-        )
+        seccion("Pasos")
+        self.pasos_container = ttk.Frame(self.form_inner, style="Panel.TFrame")
+        self.pasos_container.pack(fill="x", padx=(0, 16))
+        ttk.Button(
+            self.form_inner,
+            text="+ Agregar paso",
+            style="Secundario.TButton",
+            command=self.agregar_paso,
+        ).pack(anchor="w", pady=(8, 0), padx=(0, 16))
+
+        seccion("Imágenes")
+        self.imagenes_container = ttk.Frame(self.form_inner, style="Panel.TFrame")
+        self.imagenes_container.pack(fill="x", padx=(0, 16))
+        ttk.Button(
+            self.form_inner,
+            text="+ Subir imagen",
+            style="Secundario.TButton",
+            command=self.agregar_imagen,
+        ).pack(anchor="w", pady=(8, 20), padx=(0, 16))
 
         self.agregar_ingrediente()
         self.agregar_paso()
@@ -92,30 +118,32 @@ class AgregarTab:
             self._crear_fila_imagen(ruta)
 
     def agregar_ingrediente(self, cantidad="", nombre=""):
-        fila = tk.Frame(self.ingredientes_container)
-        fila.pack(fill="x", pady=2)
+        fila = ttk.Frame(self.ingredientes_container, style="Panel.TFrame")
+        fila.pack(fill="x", pady=3)
 
-        cantidad_entry = tk.Entry(fila, width=10)
+        cantidad_entry = ttk.Entry(fila, width=10)
         cantidad_entry.insert(0, cantidad)
         cantidad_entry.pack(side="left")
 
-        nombre_entry = tk.Entry(fila)
+        nombre_entry = ttk.Entry(fila)
         nombre_entry.insert(0, nombre)
-        nombre_entry.pack(side="left", fill="x", expand=True, padx=(4, 0))
+        nombre_entry.pack(side="left", fill="x", expand=True, padx=(6, 0))
 
         def eliminar():
             self.ingrediente_filas.remove((fila, cantidad_entry, nombre_entry))
             fila.destroy()
 
-        tk.Button(fila, text="×", command=eliminar, width=2).pack(side="left", padx=(4, 0))
+        ttk.Button(fila, text="×", style="Quitar.TButton", width=2, command=eliminar).pack(
+            side="left", padx=(6, 0)
+        )
         self.ingrediente_filas.append((fila, cantidad_entry, nombre_entry))
         cantidad_entry.focus_set()
 
     def agregar_paso(self, texto=""):
-        fila = tk.Frame(self.pasos_container)
-        fila.pack(fill="x", pady=2)
+        fila = ttk.Frame(self.pasos_container, style="Panel.TFrame")
+        fila.pack(fill="x", pady=3)
 
-        entry = tk.Entry(fila)
+        entry = ttk.Entry(fila)
         entry.insert(0, texto)
         entry.pack(side="left", fill="x", expand=True)
 
@@ -123,7 +151,9 @@ class AgregarTab:
             self.paso_filas.remove((fila, entry))
             fila.destroy()
 
-        tk.Button(fila, text="×", command=eliminar, width=2).pack(side="left", padx=(4, 0))
+        ttk.Button(fila, text="×", style="Quitar.TButton", width=2, command=eliminar).pack(
+            side="left", padx=(6, 0)
+        )
         self.paso_filas.append((fila, entry))
         entry.focus_set()
 
@@ -138,9 +168,9 @@ class AgregarTab:
         self._crear_fila_imagen(guardar_imagen(ruta_origen))
 
     def _crear_fila_imagen(self, ruta_relativa):
-        fila = tk.Frame(self.imagenes_container)
-        fila.pack(fill="x", pady=2)
-        tk.Label(fila, text=Path(ruta_relativa).name, anchor="w").pack(
+        fila = ttk.Frame(self.imagenes_container, style="Panel.TFrame")
+        fila.pack(fill="x", pady=3)
+        ttk.Label(fila, text=Path(ruta_relativa).name, style="Panel.TLabel").pack(
             side="left", fill="x", expand=True
         )
 
@@ -148,7 +178,9 @@ class AgregarTab:
             self.imagen_filas.remove((fila, ruta_relativa))
             fila.destroy()
 
-        tk.Button(fila, text="×", command=eliminar, width=2).pack(side="left", padx=(4, 0))
+        ttk.Button(fila, text="×", style="Quitar.TButton", width=2, command=eliminar).pack(
+            side="left", padx=(6, 0)
+        )
         self.imagen_filas.append((fila, ruta_relativa))
 
     def _limpiar_filas(self, container, filas):
@@ -183,11 +215,11 @@ class AgregarTab:
             ok = guardar_receta(receta)
 
         if not ok:
-            self.estado_label.config(fg="red")
+            self.estado_label.config(foreground=ERROR)
             self.estado.set("El título es obligatorio.")
             return
 
-        self.estado_label.config(fg="green")
+        self.estado_label.config(foreground=EXITO)
         self.estado.set("Receta guardada.")
         self.parent.after(2000, lambda: self.estado.set(""))
 

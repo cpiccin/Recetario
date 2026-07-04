@@ -1,8 +1,18 @@
 import tkinter as tk
+from tkinter import ttk
 
 from PIL import Image, ImageTk
 
 from storage import BASE_DIR, cargar_recetas
+from styles import (
+    ACCENT_DARK,
+    FONT_SECCION,
+    FONT_TITULO,
+    TEXT,
+    agregar_hover_listbox,
+    estilizar_listbox,
+    estilizar_texto,
+)
 
 
 class RecetasTab:
@@ -14,34 +24,43 @@ class RecetasTab:
         self.imagenes_referencias = []
         self.receta_actual_indice = None
 
-        list_frame = tk.Frame(parent)
-        list_frame.pack(side="left", fill="y", padx=(10, 5), pady=10)
+        list_frame = ttk.Frame(parent, style="Panel.TFrame")
+        list_frame.pack(side="left", fill="y", padx=(0, 12), pady=0)
 
-        scrollbar = tk.Scrollbar(list_frame)
+        inner_list = ttk.Frame(list_frame, style="Panel.TFrame")
+        inner_list.pack(fill="both", expand=True, padx=12, pady=12)
+
+        scrollbar = ttk.Scrollbar(inner_list)
         scrollbar.pack(side="right", fill="y")
 
-        self.lista = tk.Listbox(list_frame, width=25, yscrollcommand=scrollbar.set)
-        self.lista.pack(side="left", fill="y", expand=True)
+        self.lista = tk.Listbox(inner_list, width=26, yscrollcommand=scrollbar.set)
+        estilizar_listbox(self.lista)
+        agregar_hover_listbox(self.lista)
+        self.lista.pack(side="left", fill="both", expand=True)
         self.lista.bind("<<ListboxSelect>>", self.on_seleccionar)
         scrollbar.config(command=self.lista.yview)
 
-        right_frame = tk.Frame(parent)
-        right_frame.pack(side="left", fill="both", expand=True, padx=(5, 10), pady=10)
+        right_frame = ttk.Frame(parent, style="Panel.TFrame")
+        right_frame.pack(side="left", fill="both", expand=True)
 
-        toolbar = tk.Frame(right_frame)
+        inner_right = ttk.Frame(right_frame, style="Panel.TFrame")
+        inner_right.pack(fill="both", expand=True, padx=16, pady=12)
+
+        toolbar = ttk.Frame(inner_right, style="Panel.TFrame")
         toolbar.pack(side="top", fill="x")
-        self.editar_btn = tk.Button(
+        self.editar_btn = ttk.Button(
             toolbar, text="Editar", command=self.on_editar_click, state="disabled"
         )
-        self.editar_btn.pack(side="right", pady=(0, 5))
+        self.editar_btn.pack(side="right", pady=(0, 8))
 
-        self.vista_texto = tk.Text(
-            right_frame, wrap="word", width=1, height=1, borderwidth=0, highlightthickness=0
-        )
+        self.vista_texto = tk.Text(inner_right, wrap="word", width=1, height=1)
+        estilizar_texto(self.vista_texto)
         self.vista_texto.pack(fill="both", expand=True)
-        self.vista_texto.tag_configure("titulo", font=("Segoe UI", 18, "bold"), spacing3=12)
-        self.vista_texto.tag_configure("seccion", font=("Segoe UI", 11, "bold"), spacing1=10, spacing3=4)
-        self.vista_texto.tag_configure("cuerpo", font=("Segoe UI", 10), spacing1=2)
+        self.vista_texto.tag_configure("titulo", font=FONT_TITULO, foreground=TEXT, spacing3=12)
+        self.vista_texto.tag_configure(
+            "seccion", font=FONT_SECCION, foreground=ACCENT_DARK, spacing1=12, spacing3=4
+        )
+        self.vista_texto.tag_configure("cuerpo", foreground=TEXT, spacing1=2)
         self.vista_texto.config(state="disabled")
 
         self.refrescar_lista()
@@ -94,13 +113,13 @@ class RecetasTab:
                 cantidad = item.get("cantidad", "").strip()
                 nombre = item.get("nombre", "").strip()
                 texto = f"{cantidad} {nombre}".strip() if cantidad else nombre
-                self.vista_texto.insert("end", f"• {texto}\n", "cuerpo")
+                self.vista_texto.insert("end", f"•  {texto}\n", "cuerpo")
 
         pasos = receta.get("pasos") or []
         if pasos:
             self.vista_texto.insert("end", "\nPasos\n", "seccion")
             for numero, paso in enumerate(pasos, start=1):
-                self.vista_texto.insert("end", f"{numero}. {paso}\n", "cuerpo")
+                self.vista_texto.insert("end", f"{numero}.  {paso}\n", "cuerpo")
 
         imagenes = receta.get("imagenes") or []
         if imagenes:
@@ -114,7 +133,7 @@ class RecetasTab:
                     self.vista_texto.image_create("end", image=foto)
                     self.vista_texto.insert("end", "\n\n")
                 except (FileNotFoundError, OSError):
-                    self.vista_texto.insert("end", f"• {ruta} (no se pudo cargar)\n", "cuerpo")
+                    self.vista_texto.insert("end", f"•  {ruta} (no se pudo cargar)\n", "cuerpo")
 
         self.vista_texto.config(state="disabled")
 

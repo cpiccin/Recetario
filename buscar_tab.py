@@ -1,6 +1,8 @@
 import tkinter as tk
+from tkinter import ttk
 
 from storage import cargar_recetas
+from styles import agregar_hover_listbox, estilizar_listbox
 
 
 class BuscarTab:
@@ -12,30 +14,42 @@ class BuscarTab:
         self.criterio = tk.StringVar(value="nombre")
         self.texto = tk.StringVar()
 
-        controles = tk.Frame(parent)
-        controles.pack(fill="x", padx=10, pady=10)
+        panel = ttk.Frame(parent, style="Panel.TFrame")
+        panel.pack(fill="both", expand=True)
 
-        tk.Radiobutton(
+        contenido = ttk.Frame(panel, style="Panel.TFrame")
+        contenido.pack(fill="both", expand=True, padx=16, pady=16)
+
+        ttk.Label(contenido, text="Buscar receta", style="Seccion.TLabel").pack(
+            anchor="w", pady=(0, 10)
+        )
+
+        controles = ttk.Frame(contenido, style="Panel.TFrame")
+        controles.pack(fill="x")
+
+        ttk.Radiobutton(
             controles,
             text="Nombre de receta",
             variable=self.criterio,
             value="nombre",
             command=self.buscar,
         ).pack(side="left")
-        tk.Radiobutton(
+        ttk.Radiobutton(
             controles,
             text="Ingrediente",
             variable=self.criterio,
             value="ingrediente",
             command=self.buscar,
-        ).pack(side="left", padx=(10, 0))
+        ).pack(side="left", padx=(16, 0))
 
-        entry = tk.Entry(parent, textvariable=self.texto)
-        entry.pack(fill="x", padx=10)
+        entry = ttk.Entry(contenido, textvariable=self.texto, font=("Segoe UI", 11))
+        entry.pack(fill="x", pady=(10, 12))
         entry.bind("<KeyRelease>", lambda e: self.buscar())
 
-        self.lista = tk.Listbox(parent)
-        self.lista.pack(fill="both", expand=True, padx=10, pady=10)
+        self.lista = tk.Listbox(contenido)
+        estilizar_listbox(self.lista)
+        agregar_hover_listbox(self.lista)
+        self.lista.pack(fill="both", expand=True)
         self.lista.bind("<<ListboxSelect>>", self.on_seleccionar)
 
         self.buscar()

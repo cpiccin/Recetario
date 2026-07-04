@@ -4,19 +4,23 @@ from tkinter import ttk
 from agregar_tab import AgregarTab
 from buscar_tab import BuscarTab
 from recetas_tab import RecetasTab
+from styles import aplicar_estilo
 
 
 def main():
     root = tk.Tk()
     root.title("Recetario")
-    root.geometry("750x550")
+    root.geometry("820x600")
+    root.minsize(650, 450)
+
+    aplicar_estilo(root)
 
     notebook = ttk.Notebook(root)
-    notebook.pack(fill="both", expand=True)
+    notebook.pack(fill="both", expand=True, padx=12, pady=12)
 
-    recetas_frame = tk.Frame(notebook)
-    agregar_frame = tk.Frame(notebook)
-    buscar_frame = tk.Frame(notebook)
+    recetas_frame = ttk.Frame(notebook)
+    agregar_frame = ttk.Frame(notebook)
+    buscar_frame = ttk.Frame(notebook)
 
     notebook.add(recetas_frame, text="Recetas")
     notebook.add(agregar_frame, text="Agregar/Editar")
