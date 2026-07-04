@@ -10,10 +10,10 @@ def cargar_recetas():
     return []
 
 
-def guardar_receta(texto):
-    texto = texto.strip()
-    if not texto:
-        return
+def guardar_receta(receta):
+    if not receta.get("titulo", "").strip():
+        return False
     recetas = cargar_recetas()
-    recetas.append(texto)
+    recetas.append(receta)
     RECETAS_PATH.write_text(json.dumps(recetas, ensure_ascii=False, indent=2), encoding="utf-8")
+    return True
