@@ -100,7 +100,7 @@ class AgregarTab:
         self.imagenes_container.pack(fill="x", padx=(0, 16))
         ttk.Button(
             self.form_inner,
-            text="+ Subir imagen",
+            text="+ Subir imágenes",
             style="Secundario.TButton",
             command=self.agregar_imagen,
         ).pack(anchor="w", pady=(8, 20), padx=(0, 16))
@@ -227,14 +227,12 @@ class AgregarTab:
         texto.focus_set()
 
     def agregar_imagen(self):
-        ruta_origen = filedialog.askopenfilename(
-            title="Elegí una imagen",
+        rutas_origen = filedialog.askopenfilenames(
+            title="Elegí una o más imágenes",
             filetypes=[("Imágenes", "*.png *.jpg *.jpeg *.gif *.bmp")],
         )
-        if not ruta_origen:
-            return
-
-        self._crear_fila_imagen(guardar_imagen(ruta_origen))
+        for ruta_origen in rutas_origen:
+            self._crear_fila_imagen(guardar_imagen(ruta_origen))
 
     def _crear_fila_imagen(self, ruta_relativa):
         fila = ttk.Frame(self.imagenes_container, style="Panel.TFrame")
