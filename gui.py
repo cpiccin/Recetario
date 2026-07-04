@@ -2,7 +2,9 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog
 
-from storage import cargar_recetas, guardar_imagen, guardar_receta
+from PIL import Image, ImageTk
+
+from storage import BASE_DIR, cargar_recetas, guardar_imagen, guardar_receta
 
 
 class RecetarioApp:
@@ -15,6 +17,7 @@ class RecetarioApp:
         self.ingrediente_filas = []
         self.paso_filas = []
         self.imagen_filas = []
+        self.imagenes_referencias = []
 
         list_frame = tk.Frame(root)
         list_frame.pack(side="left", fill="y", padx=(10, 5), pady=10)
@@ -179,6 +182,8 @@ class RecetarioApp:
         self.form_frame.pack_forget()
         self.view_frame.pack(fill="both", expand=True)
 
+        self.imagenes_referencias.clear()
+
         self.vista_texto.config(state="normal")
         self.vista_texto.delete("1.0", "end")
         self.vista_texto.insert("end", receta.get("titulo", ""), "titulo")
@@ -202,7 +207,15 @@ class RecetarioApp:
         if imagenes:
             self.vista_texto.insert("end", "\nImágenes\n", "seccion")
             for ruta in imagenes:
-                self.vista_texto.insert("end", f"• {ruta}\n", "cuerpo")
+                try:
+                    imagen = Image.open(BASE_DIR / ruta)
+                    imagen.thumbnail((300, 300))
+                    foto = ImageTk.PhotoImage(imagen)
+                    self.imagenes_referencias.append(foto)
+                    self.vista_texto.image_create("end", image=foto)
+                    self.vista_texto.insert("end", "\n\n")
+                except (FileNotFoundError, OSError):
+                    self.vista_texto.insert("end", f"• {ruta} (no se pudo cargar)\n", "cuerpo")
 
         self.vista_texto.config(state="disabled")
 
