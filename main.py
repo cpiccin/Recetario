@@ -19,7 +19,7 @@ def main():
     buscar_frame = tk.Frame(notebook)
 
     notebook.add(recetas_frame, text="Recetas")
-    notebook.add(agregar_frame, text="Agregar receta")
+    notebook.add(agregar_frame, text="Agregar/Editar")
     notebook.add(buscar_frame, text="Buscar")
 
     def ir_a_editar(receta, indice):
@@ -29,9 +29,13 @@ def main():
     def on_receta_guardada():
         recetas_tab.refrescar_lista()
 
+    def ir_a_receta(indice):
+        recetas_tab.seleccionar_indice(indice)
+        notebook.select(recetas_frame)
+
     recetas_tab = RecetasTab(recetas_frame, on_editar=ir_a_editar)
     agregar_tab = AgregarTab(agregar_frame, on_guardado=on_receta_guardada)
-    BuscarTab(buscar_frame)
+    BuscarTab(buscar_frame, on_seleccionar=ir_a_receta)
 
     root.mainloop()
 

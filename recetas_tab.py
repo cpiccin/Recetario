@@ -46,11 +46,14 @@ class RecetasTab:
 
         self.refrescar_lista()
 
-    def refrescar_lista(self):
+    def _cargar_lista(self):
         self.recetas = cargar_recetas()
         self.lista.delete(0, "end")
         for receta in self.recetas:
             self.lista.insert("end", receta.get("titulo", "(sin título)"))
+
+    def refrescar_lista(self):
+        self._cargar_lista()
 
         self.receta_actual_indice = None
         self.editar_btn.config(state="disabled")
@@ -58,6 +61,15 @@ class RecetasTab:
         self.vista_texto.config(state="normal")
         self.vista_texto.delete("1.0", "end")
         self.vista_texto.config(state="disabled")
+
+    def seleccionar_indice(self, indice):
+        self._cargar_lista()
+        self.lista.selection_clear(0, "end")
+        self.lista.selection_set(indice)
+        self.lista.see(indice)
+        self.receta_actual_indice = indice
+        self.mostrar_vista(self.recetas[indice])
+        self.editar_btn.config(state="normal")
 
     def on_seleccionar(self, event):
         seleccion = self.lista.curselection()
