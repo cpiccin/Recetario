@@ -42,7 +42,7 @@ class BuscarTab:
             command=self.buscar,
         ).pack(side="left", padx=(16, 0))
 
-        entry = ttk.Entry(contenido, textvariable=self.texto, font=("Segoe UI", 11))
+        entry = ttk.Entry(contenido, textvariable=self.texto, font=("Verdana", 11))
         entry.pack(fill="x", pady=(10, 12))
         entry.bind("<KeyRelease>", lambda e: self.buscar())
 

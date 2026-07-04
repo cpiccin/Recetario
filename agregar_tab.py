@@ -50,7 +50,7 @@ class AgregarTab:
             )
 
         seccion("Título *", primera=True)
-        self.titulo_entry = ttk.Entry(self.form_inner, font=("Segoe UI", 12))
+        self.titulo_entry = ttk.Entry(self.form_inner, font=("Verdana", 12))
         self.titulo_entry.pack(fill="x", padx=(0, 16))
 
         seccion("Ingredientes")
