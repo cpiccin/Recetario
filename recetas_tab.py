@@ -3,13 +3,16 @@ from tkinter import ttk
 
 from PIL import Image, ImageTk
 
+from richtext import configurar_tags, insertar_html
 from storage import BASE_DIR, cargar_recetas
 from styles import (
     ACCENT,
     BG_PANEL,
     BORDER,
     FONT_BOLD,
+    FONT_NORMAL,
     FONT_TITULO,
+    TEXT,
     agregar_hover_listbox,
     estilizar_listbox,
     habilitar_scroll_rueda,
@@ -117,6 +120,30 @@ class RecetasTab:
     def _separador(self, parent):
         tk.Frame(parent, bg=BORDER, height=1).pack(fill="x", pady=14, padx=(0, 16))
 
+    def _crear_texto_html(self, parent, html, ancho=60):
+        texto = tk.Text(
+            parent,
+            wrap="word",
+            width=ancho,
+            height=1,
+            font=FONT_NORMAL,
+            bg=BG_PANEL,
+            fg=TEXT,
+            bd=0,
+            highlightthickness=0,
+            padx=0,
+            pady=0,
+        )
+        configurar_tags(texto, FONT_NORMAL)
+        insertar_html(texto, html)
+        return texto
+
+    def _ajustar_altura(self, texto):
+        texto.update_idletasks()
+        resultado = texto.count("1.0", "end", "displaylines")
+        lineas = resultado[0] if isinstance(resultado, tuple) else (resultado or 1)
+        texto.configure(height=max(lineas, 1), state="disabled")
+
     def _mostrar_imagen(self, parent, ruta, maximo=300, lado=None):
         try:
             imagen = Image.open(BASE_DIR / ruta)
@@ -143,12 +170,13 @@ class RecetasTab:
 
         ingredientes = receta.get("ingredientes") or []
         pasos = receta.get("pasos") or []
+        notas = receta.get("notas", "").strip()
         imagenes = receta.get("imagenes") or []
 
         resumen = []
         if ingredientes:
             resumen.append(f"{len(ingredientes)} ingrediente{'s' if len(ingredientes) != 1 else ''}")
-        if pasos:
+        if isinstance(pasos, list) and pasos:
             resumen.append(f"{len(pasos)} paso{'s' if len(pasos) != 1 else ''}")
         if resumen:
             ttk.Label(inner, text="  ·  ".join(resumen), style="Muted.TLabel").pack(
@@ -168,27 +196,41 @@ class RecetasTab:
                 )
                 cantidad = item.get("cantidad", "").strip()
                 if cantidad:
-                    ttk.Label(fila, text=cantidad, style="Panel.TLabel", font=FONT_BOLD, width=10).pack(
+                    ttk.Label(fila, text=cantidad, style="Panel.TLabel", font=FONT_BOLD).pack(
                         side="left", padx=(8, 0)
                     )
-                ttk.Label(fila, text=item.get("nombre", ""), style="Panel.TLabel").pack(
-                    side="left", padx=(0 if cantidad else 8, 0)
-                )
+                nombre_widget = self._crear_texto_html(fila, item.get("nombre", ""), ancho=40)
+                nombre_widget.pack(side="left", padx=(8, 0), fill="x", expand=True)
+                self._ajustar_altura(nombre_widget)
 
         if pasos:
             self._separador(inner)
             ttk.Label(inner, text="Pasos", style="Seccion.TLabel").pack(
                 anchor="w", padx=(0, 16), pady=(0, 8)
             )
-            for numero, paso in enumerate(pasos, start=1):
-                fila = ttk.Frame(inner, style="Panel.TFrame")
-                fila.pack(fill="x", padx=(0, 16), pady=4)
-                tk.Label(fila, text=str(numero), bg=ACCENT, fg="white", font=FONT_BOLD, width=2).pack(
-                    side="left", anchor="n"
-                )
-                ttk.Label(fila, text=paso, style="Panel.TLabel", wraplength=460, justify="left").pack(
-                    side="left", padx=(10, 0), fill="x", expand=True
-                )
+            if isinstance(pasos, list):
+                for numero, paso in enumerate(pasos, start=1):
+                    fila = ttk.Frame(inner, style="Panel.TFrame")
+                    fila.pack(fill="x", padx=(0, 16), pady=4)
+                    tk.Label(fila, text=str(numero), bg=ACCENT, fg="white", font=FONT_BOLD, width=2).pack(
+                        side="left", anchor="n"
+                    )
+                    paso_widget = self._crear_texto_html(fila, paso, ancho=55)
+                    paso_widget.pack(side="left", padx=(10, 0), fill="x", expand=True)
+                    self._ajustar_altura(paso_widget)
+            else:
+                pasos_widget = self._crear_texto_html(inner, pasos, ancho=64)
+                pasos_widget.pack(anchor="w", fill="x", padx=(0, 16))
+                self._ajustar_altura(pasos_widget)
+
+        if notas:
+            self._separador(inner)
+            ttk.Label(inner, text="Notas", style="Seccion.TLabel").pack(
+                anchor="w", padx=(0, 16), pady=(0, 8)
+            )
+            notas_widget = self._crear_texto_html(inner, notas, ancho=64)
+            notas_widget.pack(anchor="w", fill="x", padx=(0, 16))
+            self._ajustar_altura(notas_widget)
 
         if imagenes:
             self._separador(inner)

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from richtext import quitar_etiquetas
 from storage import cargar_recetas
 from styles import agregar_hover_listbox, estilizar_listbox
 
@@ -65,7 +66,7 @@ class BuscarTab:
                 coincide = texto in receta.get("titulo", "").lower()
             else:
                 coincide = any(
-                    texto in ingrediente.get("nombre", "").lower()
+                    texto in quitar_etiquetas(ingrediente.get("nombre", "")).lower()
                     for ingrediente in receta.get("ingredientes") or []
                 )
             if coincide:
