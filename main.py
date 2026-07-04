@@ -1,10 +1,13 @@
 import tkinter as tk
 
+from gui import RecetarioApp
+
+
 def main():
     root = tk.Tk()
-    root.title("Recetario")
-    root.geometry("500x400")
+    RecetarioApp(root)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()
