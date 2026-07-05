@@ -4,6 +4,7 @@ from tkinter import ttk
 from agregar_tab import AgregarTab
 from buscar_tab import BuscarTab
 from recetas_tab import RecetasTab
+from sesion_tab import SesionTab
 from styles import aplicar_estilo
 
 
@@ -21,10 +22,12 @@ def main():
     recetas_frame = ttk.Frame(notebook)
     agregar_frame = ttk.Frame(notebook)
     buscar_frame = ttk.Frame(notebook)
+    sesion_frame = ttk.Frame(notebook)
 
     notebook.add(recetas_frame, text="Recetas")
     notebook.add(agregar_frame, text="Agregar/Editar")
     notebook.add(buscar_frame, text="Buscar")
+    notebook.add(sesion_frame, text="Sesión")
 
     def ir_a_editar(receta, indice):
         agregar_tab.cargar_receta(receta, indice)
@@ -40,6 +43,7 @@ def main():
     recetas_tab = RecetasTab(recetas_frame, on_editar=ir_a_editar)
     agregar_tab = AgregarTab(agregar_frame, on_guardado=on_receta_guardada)
     BuscarTab(buscar_frame, on_seleccionar=ir_a_receta)
+    SesionTab(sesion_frame, on_importado=on_receta_guardada)
 
     root.mainloop()
 
