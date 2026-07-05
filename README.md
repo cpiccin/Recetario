@@ -3,6 +3,12 @@
 Aplicación para guardar, editar y buscar tus recetas de cocina, hecha en Python con tkinter.
 
 <p align="center">
+  <a href="https://github.com/cpiccin/Recetario/releases/latest/download/Recetario.exe">
+    <img src="https://img.shields.io/badge/⬇-Descargar%20Recetario.exe-orange?style=for-the-badge" alt="Descargar Recetario.exe">
+  </a>
+</p>
+
+<p align="center">
   <img src="docs/screenshots/recetas.png" alt="Vista de una receta" width="800">
 </p>
 
@@ -23,7 +29,9 @@ Aplicación para guardar, editar y buscar tus recetas de cocina, hecha en Python
 
 ## Instalación
 
-Requiere Python 3.10+.
+**Windows, sin instalar nada:** descargá [Recetario.exe](https://github.com/cpiccin/Recetario/releases/latest/download/Recetario.exe), guardalo en una carpeta y ejecutalo. No necesita Python instalado.
+
+**Desde el código fuente** (requiere Python 3.10+):
 
 ```bash
 pip install -r requirements.txt
