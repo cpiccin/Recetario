@@ -21,11 +21,12 @@ Aplicación para guardar, editar y buscar tus recetas de cocina, hecha en Python
 - **Imágenes**: subí una o varias fotos por receta, se ven en miniatura y se pueden ampliar con navegación entre ellas.
 - **Buscador**: por nombre de receta o por ingrediente.
 - **Exportar a PDF**: todas las recetas o solo las que se elija, cada una en su propia página.
+- **Exportar/Importar recetas**: permite descargar en un .zip el json de recetas y las imagenes, e importar recetas en el mismo formato.
 
 
-| Recetas | Agregar / Editar | Buscar |
-|---|---|---|
-| ![Recetas](docs/screenshots/recetas.png) | ![Agregar/Editar](docs/screenshots/agregar.png) | ![Buscar](docs/screenshots/buscar.png) |
+| Recetas | Agregar / Editar | Buscar | Sesión |
+|---|---|---|---|
+| ![Recetas](docs/screenshots/recetas.png) | ![Agregar/Editar](docs/screenshots/agregar.png) | ![Buscar](docs/screenshots/buscar.png) | ![Sesión](docs/screenshots/sesion.png) |
 
 ## Instalación
 
