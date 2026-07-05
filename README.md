@@ -29,7 +29,7 @@ Requiere Python 3.10+.
 pip install -r requirements.txt
 ```
 
-## ▶️ Uso
+## Uso
 
 ```bash
 python main.py
