@@ -1,8 +1,13 @@
 import json
 import shutil
+import sys
 from pathlib import Path
 
-BASE_DIR = Path(__file__).parent
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).parent
+else:
+    BASE_DIR = Path(__file__).parent
+
 RECETAS_PATH = BASE_DIR / "recetas.json"
 IMG_DIR = BASE_DIR / "img"
 

@@ -6,3 +6,8 @@ venv/
 # Datos generados localmente
 recetas.json
 img/
+
+# Artefactos de build de PyInstaller
+build/
+dist/
+*.spec
